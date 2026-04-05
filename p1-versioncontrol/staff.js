@@ -31,4 +31,12 @@ const staff = [
         github: "Urielele",
         foto:"foto/beemo.png",
     }
+    {
+        name: "Alif Salsabil Salam",
+        division: "PSDM",
+        batch: "2025",
+        role: "Member",
+        github: "Alep_be",
+        foto:"",
+    },
 ];
