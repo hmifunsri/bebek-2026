@@ -16,6 +16,14 @@ const staff = [
         foto:"",
     },
     {
+        name: "Muhammad Fachri Syahputra",
+        division: "PIP",
+        batch: "2025",
+        role: "Member",
+        github: "fachriisy",
+        foto:"",
+    },
+    {
         name: "Felix Gilbert",
         division: "PTI",
         batch: "2026",
