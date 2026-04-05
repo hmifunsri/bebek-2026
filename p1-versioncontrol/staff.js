@@ -39,5 +39,12 @@ const staff = [
         github: "tegarprasety0",
         foto:"",
     },
-    
+    {
+        name: "Ayesya Kamila Farda",
+        division: "PSDM",
+        batch: "2026",
+        role: "Member",
+        github: "AyesyaKF",
+        foto:"",
+    },
 ];
