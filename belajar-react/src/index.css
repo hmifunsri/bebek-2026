@@ -1,0 +1,125 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background:
+  linear-gradient(rgba(9, 7, 88, 0.5), rgba(32, 32, 35, 0.5)),
+  url("/haha.jpg");
+  background-size:  cover;
+  color: white;
+}
+
+/* Judul animasi */
+.judul {
+  text-align: center;
+  margin-top: 70px;
+  opacity: 0;
+  transform: translateY(50px);
+  animation: slideUp 0.8s ease-out forwards;
+}
+
+@keyframes slideUp {
+  to {
+    opacity:1;
+    transform: translateY(0);
+  }
+}
+
+/* Form container */
+.form {
+  max-width: 300px;
+  opacity: 0;
+  transform: translateY(50px);
+  animation: slideUp 0.8s ease-out forwards;
+  animation-delay: 0.3s;
+  margin: 80px auto;
+  margin-bottom: auto;
+  padding: 30px;
+  border-radius: 20px;
+  background: rgba(30,31,32,0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid #000;
+}
+
+/* Input group */
+.input-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* Input */
+input {
+  background: hsla(0, 2%, 25%, 0.61);
+ border-radius: 10px;
+  color: white;
+  padding: 8px;
+  outline: none;
+  transition: 0.3s;
+  max-height: 20px;
+  backdrop-filter: 10px;
+  height: 7px;
+}
+input:focus {
+  border: 2px solid #18191a;
+}
+
+
+/* Label */
+label {
+  width: 100px;
+  color:white;
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  font-size: 15px;
+}
+p{
+   width: 100px;
+  color:white;
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  font-size: 15px;
+}
+.jurusan {
+  display: flex;
+  
+  margin-top: 0px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 5px 0;
+  cursor: pointer;
+  font-size: 0.6em;
+}
+
+/* bikin radio lebih enak diliat */
+.option input {
+  width: 16px;
+  height: 16px;
+}
+ .tombol{
+   max-width: 200px;
+  opacity: 0;
+  margin: 80px auto;
+ display: flex;
+ opacity: 0;
+  transform: translateY(50px);
+  animation: slideUp 0.8s ease-out forwards;
+  animation-delay: 0.3s;
+  justify-content: center; 
+  align-items: center; 
+  margin-top: 20px;
+  padding: 10px;
+  border-radius: 5px;
+  background: rgba(30,31,32,0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid #000;
+  color: white;
+  transition: 0.3s ease; 
+ }
+ 
+ .tombol:hover{
+    background: rgba(30, 31, 32, 0.151);
+     transform: scale(5.1); 
+    
+ }
