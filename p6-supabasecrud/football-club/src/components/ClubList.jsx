@@ -2,6 +2,7 @@ import { ListChecks } from 'lucide-react'
 import ClubCard from './ClubCard'
 import LoadingSkeleton from './common/LoadingSkeleton'
 import ErrorBox from './common/ErrorBox'
+import EmptyState from './common/EmptyState'
 
 function ClubList({ clubs, loading, error, onRetry, onEdit, onDelete }) {
   return (
@@ -22,11 +23,7 @@ function ClubList({ clubs, loading, error, onRetry, onEdit, onDelete }) {
 
         {!loading && error && <ErrorBox message={error} onRetry={onRetry} />}
 
-        {!loading && !error && clubs.length === 0 && (
-          <p className="rounded-[18px] border border-hairline bg-white p-10 text-center font-text text-body text-ink-48">
-            Belum ada klub yang tersedia.
-          </p>
-        )}
+        {!loading && !error && clubs.length === 0 && <EmptyState />}
 
         {!loading && !error && clubs.length > 0 && (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
