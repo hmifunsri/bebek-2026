@@ -59,14 +59,17 @@ function App() {
     const { strTeam, strStadium, intFormedYear, strBadge } = club
     setFormError(null)
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('clubs')
         .update({ strTeam, strStadium, intFormedYear, strBadge })
         .eq('id', id)
+        .select()
       if (error) throw new Error(error.message)
-      setClubs((prevClubs) =>
-        prevClubs.map((c) => (c.id === id ? { ...c, strTeam, strStadium, intFormedYear, strBadge } : c))
-      )
+      // Kalau RLS memblokir, PostgREST balik 0 baris TANPA error -> harus dicek manual
+      if (!data || data.length === 0) {
+        throw new Error('Perubahan tidak tersimpan. Pastikan policy RLS UPDATE tabel "clubs" sudah dibuat.')
+      }
+      setClubs((prevClubs) => prevClubs.map((c) => (c.id === id ? data[0] : c)))
       setEditingClub(null)
     } catch (err) {
       setFormError(err.message)
@@ -75,12 +78,17 @@ function App() {
   }
 
   // DELETE - hapus data klub dari Supabase
-  const handleDeleteClub = async (id) => {
-    const club = clubs.find((c) => c.id === id)
-    if (!window.confirm(`Hapus klub "${club?.strTeam ?? 'ini'}"?`)) return
+  // CATATAN: ClubCard memanggil onDelete(club) dengan objek klub, bukan id.
+  const handleDeleteClub = async (club) => {
+    const id = club?.id
+    if (!id) return
+    if (!window.confirm(`Hapus klub "${club.strTeam ?? 'ini'}"?`)) return
     try {
-      const { error } = await supabase.from('clubs').delete().eq('id', id)
+      const { data, error } = await supabase.from('clubs').delete().eq('id', id).select()
       if (error) throw new Error(error.message)
+      if (!data || data.length === 0) {
+        throw new Error('Klub tidak terhapus. Pastikan policy RLS DELETE tabel "clubs" sudah dibuat.')
+      }
       setClubs((prevClubs) => prevClubs.filter((c) => c.id !== id))
       if (editingClub?.id === id) setEditingClub(null)
     } catch (err) {
