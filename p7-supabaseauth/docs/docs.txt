@@ -1,0 +1,7 @@
+Supabase:https://supabase.com/docs
+Supabase Auth:https://supabase.com/docs/guides/auth
+Supabase JS Client:https://supabase.com/docs/reference/javascript/introduction
+Auth JS Reference (signUp/signInWithPassword/signOut):https://supabase.com/docs/reference/javascript/auth-signup
+onAuthStateChange:https://supabase.com/docs/reference/javascript/auth-onauthstatechange
+React Router:https://reactrouter.com/
+PostgREST Query (from/select/insert/update/delete):https://supabase.com/docs/reference/javascript/select

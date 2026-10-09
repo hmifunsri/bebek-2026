@@ -1,0 +1,237 @@
+ALUR SUPABASE AUTH - Football Club (P7)
+
+Dokumen ini melanjutkan P6 (Supabase CRUD). Yang baru di P7:
+1. Authentication: sign up, login, logout
+2. Manajemen session
+3. Proteksi path (route guard): hanya user login yang bisa buka halaman CRUD
+
+
+1. KONFIGURASI SUPABASE (.env.local)
+
+  VITE_SUPABASE_URL             = https://YOUR-PROJECT-REF.supabase.co
+  VITE_SUPABASE_PUBLISHABLE_KEY = your-anon-public-key
+
+  - Ambil dari dashboard Supabase -> Project Settings -> API
+  - Client dibuat sekali di src/lib/supabaseClient.js via createClient()
+  - Auth & CRUD memakai client yang sama
+
+
+2. TABEL clubs (SQL Editor Supabase)
+
+  create table if not exists clubs (
+    id            uuid primary key default gen_random_uuid(),
+    strTeam       text not null,
+    strStadium    text not null,
+    intFormedYear int4 not null,
+    strBadge      text,
+    created_at    timestamptz not null default now()
+  );
+
+  RLS dibatasi ke user yang sudah login:
+
+  alter table clubs enable row level security;
+
+  create policy "Authenticated can read clubs"
+    on clubs for select to authenticated using (true);
+  create policy "Authenticated can insert clubs"
+    on clubs for insert to authenticated with check (true);
+  create policy "Authenticated can update clubs"
+    on clubs for update to authenticated using (true) with check (true);
+  create policy "Authenticated can delete clubs"
+    on clubs for delete to authenticated using (true);
+
+
+3. STRUKTUR PROJECT
+
+  src/
+    App.jsx                       -> router + daftar Route
+    main.jsx                      -> render <App/>
+    context/
+      AuthContext.js              -> createContext(null)
+      AuthProvider.jsx            -> state session + fungsi auth
+      useAuth.js                  -> hook useContext(AuthContext)
+    components/
+      ProtectedRoute.jsx          -> path khusus user login
+      PublicOnlyRoute.jsx         -> path login/daftar (redirect kalau sudah login)
+      AuthShell.jsx               -> layout kartu untuk halaman auth
+      Header.jsx                  -> tampilkan email + tombol Keluar
+      ClubForm/ClubCard/ClubList  -> komponen CRUD dari P6
+      common/
+        LoadingScreen.jsx         -> spinner "Memeriksa sesi masuk..."
+        LoadingSkeleton.jsx       -> skeleton daftar klub (dari P6)
+        ErrorBox.jsx              -> error daftar (dari P6)
+        EmptyState.jsx            -> daftar kosong (dari P6)
+    pages/
+      HomePage.jsx                -> CRUD clubs (terproteksi)
+      LoginPage.jsx               -> form login
+      SignUpPage.jsx              -> form daftar
+      NotFoundPage.jsx            -> halaman 404
+    schemas/
+      clubSchema.js               -> validasi zod data klub (dari P6)
+      authSchema.js               -> validasi zod login & daftar
+    lib/
+      supabaseClient.js           -> createClient(url, anonKey)
+
+
+4. STATE SESSION (src/context/AuthProvider.jsx)
+
+  const [session, setSession] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // baca sesi tersimpan (localStorage)
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session)
+      setLoading(false)
+    })
+
+    // dengarkan perubahan sesi
+    const { data: { subscription } } =
+      supabase.auth.onAuthStateChange((_event, nextSession) => {
+        setSession(nextSession)
+      })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  Poin penting:
+  - getSession()  -> memulihkan sesi setelah refresh halaman
+  - onAuthStateChange -> otomatis update saat login/logout/refresh token
+  - unsubscribe() dipanggil saat unmount supaya tidak memory leak
+
+
+5. FUNGSI AUTH
+
+  // SIGN UP
+  const signUp = async ({ email, password }) => {
+    const { data, error } = await supabase.auth.signUp({ email, password })
+    if (error) throw new Error(error.message)
+    return data
+  }
+
+  // LOGIN
+  const signIn = async ({ email, password }) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) throw new Error(error.message)
+    return data
+  }
+
+  // LOGOUT
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut()
+    if (error) throw new Error(error.message)
+  }
+
+  useAuth() mengembalikan: { session, user, loading, signUp, signIn, signOut }
+
+
+6. PROTEKSI PATH (src/components/ProtectedRoute.jsx)
+
+  export default function ProtectedRoute({ children }) {
+    const { user, loading } = useAuth()
+    const location = useLocation()
+
+    if (loading) return <LoadingScreen message="Memeriksa sesi masuk..." />
+    if (!user)
+      return <Navigate to="/login" replace state={{ from: location }} />
+
+    return children
+  }
+
+  PublicOnlyRoute kebalikannya: kalau user sudah ada, redirect ke "/".
+
+
+7. ROUTING (src/App.jsx)
+
+  <AuthProvider>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={
+          <ProtectedRoute><HomePage /></ProtectedRoute>
+        } />
+        <Route path="/login" element={
+          <PublicOnlyRoute><LoginPage /></PublicOnlyRoute>
+        } />
+        <Route path="/signup" element={
+          <PublicOnlyRoute><SignUpPage /></PublicOnlyRoute>
+        } />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </BrowserRouter>
+  </AuthProvider>
+
+  Poin penting:
+  - AuthProvider membungkus router supaya semua route bisa pakai useAuth()
+  - Route "/" dibungkus ProtectedRoute -> wajib login
+  - Route "/login" & "/signup" dibungkus PublicOnlyRoute
+
+
+8. ALUR LOGIN
+
+  Buka "/" tanpa sesi
+      ↓
+  ProtectedRoute: !user -> Navigate("/login", state.from = "/")
+      ↓
+  LoginPage: isi email + password
+      ↓
+  Zod lulus (loginSchema) -> handleSubmit
+      ↓
+  signIn({ email, password })  -> supabase.auth.signInWithPassword
+      ↓
+  BERHASIL: onAuthStateChange set session
+      ↓
+  navigate(location.state.from ?? "/")
+      ↓
+  ProtectedRoute: user ada -> render HomePage (CRUD jalan)
+
+  GAGAL: error.message ditampilkan di kartu login
+
+
+9. ALUR SIGN UP
+
+  Buka "/signup" -> isi email, password, konfirmasi password
+      ↓
+  Zod lulus (signUpSchema, cek password == confirmPassword)
+      ↓
+  signUp({ email, password })
+      ↓
+  ┌───────────────────────────┬────────────────────────────────┐
+  │ data.session ada          │ data.session null              │
+  │ (konfirmasi email off)    │ (konfirmasi email on, default) │
+  ↓                           ↓
+  navigate("/")               tampilkan pesan "Cek email kamu
+  (langsung masuk)            untuk mengonfirmasi akun."
+
+
+10. ALUR LOGOUT
+
+  Klik tombol "Keluar" di Header
+      ↓
+  handleLogout -> await signOut()
+      ↓
+  onAuthStateChange(SIGNED_OUT) -> setSession(null)
+      ↓
+  navigate("/login", { replace: true })
+      ↓
+  ProtectedRoute: !user -> tetap di /login
+
+
+11. ALUR KESELURUHAN
+
+  App mount
+      ↓
+  AuthProvider cek sesi (getSession) -> loading
+      ↓
+  ┌──────────────────┬───────────────────┐
+  │ ada sesi         │ tidak ada sesi     │
+  ↓                  ↓                   │
+  buka "/" ->        buka "/" ->
+  HomePage (CRUD)    redirect ke /login
+                         ↓
+                     login/daftar
+                         ↓
+                     sukses -> sesi dibuat -> HomePage
+
+  CRUD clubs (HomePage) sama persis dengan P6: READ/CREATE/UPDATE/DELETE,
+  hanya sekarang request otomatis membawa token sesi sehingga lolos RLS
+  policy "to authenticated".
